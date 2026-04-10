@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TomFlow AI PRO</title>
+
+<style>
+body{
+ margin:0;
+ font-family:system-ui;
+ background:#0b0f14;
+ color:white;
+}
+
+header{
+ padding:12px;
+ text-align:center;
+ background:#121826;
+ font-weight:bold;
+}
+
+#wrap{
+ padding:10px;
+}
+
+canvas{
+ width:100%;
+ background:#1b2233;
+ border-radius:12px;
+ margin-top:10px;
+}
+
+input,textarea,button{
+ width:100%;
+ margin-top:8px;
+ padding:12px;
+ border:none;
+ border-radius:10px;
+ font-size:14px;
+}
+
+button{
+ background:#4c7dff;
+ color:white;
+ font-weight:bold;
+}
+
+button:active{
+ transform:scale(0.98);
+}
+
+small{opacity:0.6}
+</style>
+</head>
+
+<body>
+
+<header>🔥 TomFlow AI PRO</header>
+
+<div id="wrap">
+
+<input type="file" id="file">
+
+<canvas id="canvas"></canvas>
+
+<textarea id="prompt" placeholder="Írd le mit változtasson az AI..."></textarea>
+
+<button onclick="runAI()">AI Edit</button>
+
+<small id="status"></small>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let img = new Image();
+
+/* AUTO FIT MOBILE */
+function fit(){
+ canvas.width = window.innerWidth;
+ canvas.height = window.innerHeight * 0.55;
+}
+window.onresize = fit;
+fit();
+
+/* LOAD IMAGE */
+document.getElementById("file").onchange = e=>{
+ const r = new FileReader();
+
+ r.onload = ()=>{
+  img.src = r.result;
+ };
+
+ r.readAsDataURL(e.target.files[0]);
+};
+
+img.onload = ()=>{
+ canvas.width = img.width;
+ canvas.height = img.height;
+ ctx.drawImage(img,0,0);
+};
+
+/* AI CALL */
+async function runAI(){
+
+ const prompt = document.getElementById("prompt").value;
+ const status = document.getElementById("status");
+
+ if(!img.src) return alert("Nincs kép!");
+
+ status.innerText = "AI fut...";
+
+ try{
+  const res = await fetch(BACKEND_URL(),{
+   method:"POST",
+   headers:{ "Content-Type":"application/json" },
+   body: JSON.stringify({
+    image: canvas.toDataURL(),
+    prompt: prompt
+   })
+  });
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+
+  const newImg = new Image();
+
+  newImg.onload = ()=>{
+   canvas.width = newImg.width;
+   canvas.height = newImg.height;
+   ctx.drawImage(newImg,0,0);
+   status.innerText = "Kész ✔";
+  };
+
+  newImg.src = url;
+
+ }catch(e){
+  status.innerText = "Hiba: " + e.message;
+ }
+}
+
+/* AUTO BACKEND DETECT */
+function BACKEND_URL(){
+
+ // Android emulator
+ if(navigator.userAgent.includes("Android Emulator")){
+  return "http://10.0.2.2:3000/ai";
+ }
+
+ // fallback local network
+ return "http://192.168.1.10:3000/ai";
+}
+
+</script>
+
+</body>
+</html>

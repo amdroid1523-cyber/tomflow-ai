@@ -1,0 +1,8 @@
+{
+  "appId": "com.tomflow.ai",
+  "appName": "TomFlow AI",
+  "webDir": "web",
+  "server": {
+    "cleartext": true
+  }
+}
